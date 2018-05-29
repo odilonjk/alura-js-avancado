@@ -33,6 +33,16 @@ class NegociacaoController {
         );
     }
 
+    importaNegociacoes() {
+        let negociacaoService = new NegociacaoService();
+        let promise = negociacaoService.obterNegociacoesDaSemana();
+        promise.then(negociacoes => {
+            negociacoes.forEach(negociacao => this._listaNegociacoes.adiciona(negociacao));
+            this._mensagem.texto = 'Negociações da semana obtidas com sucesso.'
+        })
+        .catch(erro => this._mensagem.texto = 'Erro ao importar negociações da semana.');
+    }
+
     _limpaFormulario() {
         this._inputData.value = '';
         this._inputQuantidade.value = 1;
