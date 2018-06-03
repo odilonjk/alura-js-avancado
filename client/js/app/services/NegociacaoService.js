@@ -1,33 +1,40 @@
 class NegociacaoService {
 
+    constructor() {
+        this._http = new HttpService();
+    }
+
     obterNegociacoesDaSemana() {
-        return this.getNegocicacoes('negociacoes/semana');
+        return this._http.get('negociacoes/semana')
+            .then(negociacoes => {
+                return negociacoes.map(obj => new Negociacao(new Date(obj.data), obj.quantidade, obj.valor))
+            })
+            .catch(erro => {
+                console.log(erro);
+                throw new Error('Não foi possível obter as negociações da semana.');
+            });
     }
     
     obterNegociacoesDaSemanaPassada() {
-        return this.getNegocicacoes('negociacoes/passada');
+        return this._http.get('negociacoes/anterior')
+            .then(negociacoes => {
+                return negociacoes.map(obj => new Negociacao(new Date(obj.data), obj.quantidade, obj.valor))
+            })
+            .catch(erro => {
+                console.log(erro);
+                throw new Error('Não foi possível obter as negociações da semana passada.');
+            });
     }
 
     obterNegociacoesDaSemanaRetrasada() {
-        return this.getNegocicacoes('negociacoes/retrasada');
+        return this._http.get('negociacoes/retrasada')
+            .then(negociacoes => {
+                return negociacoes.map(obj => new Negociacao(new Date(obj.data), obj.quantidade, obj.valor))
+            })
+            .catch(erro => {
+                console.log(erro);
+                throw new Error('Não foi possível obter as negociações da semana retrasada.');
+            });
     }
 
-    getNegocicacoes(url) {
-        return new Promise((resolve, reject) => {
-            let xhr = new XMLHttpRequest();
-            xhr.open('GET', url);
-            xhr.onreadystatechange = () => {
-                if(xhr.readyState == 4) {
-                    if(xhr.status == 200) {
-                        resolve(JSON.parse(xhr.responseText)
-                            .map(obj => new Negociacao(new Date(obj.data), obj.quantidade, obj.valor)));
-                    } else {
-                        console.log(xhr.responseText);
-                        reject('Erro ao obter negociações da semana.');
-                    }
-                }
-            };
-            xhr.send();
-        });
-    }
 }

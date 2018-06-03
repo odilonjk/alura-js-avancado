@@ -5,11 +5,12 @@ class NegociacaoController {
         this._inputData = $('#data');
         this._inputQuantidade = $('#quantidade');
         this._inputValor = $('#valor');
-        //  Criando bindings
+        this._ordemAtual = '';
+        //  Criando bindings para monitorar metodos que atualizam a View
         this._listaNegociacoes = new BindHelper(
             new ListaNegociacoes(),
             new NegociacoesView($('#negociacoesView')),
-            'adiciona', 'esvazia'
+            'adiciona', 'esvazia', 'ordena', 'inverteOrdem'
         );
         this._mensagem = new BindHelper(
             new Mensagem(),
@@ -35,12 +36,18 @@ class NegociacaoController {
 
     importaNegociacoes() {
         let negociacaoService = new NegociacaoService();
-        let promise = negociacaoService.obterNegociacoesDaSemana();
-        promise.then(negociacoes => {
-            negociacoes.forEach(negociacao => this._listaNegociacoes.adiciona(negociacao));
-            this._mensagem.texto = 'Negociações da semana obtidas com sucesso.'
-        })
-        .catch(erro => this._mensagem.texto = 'Erro ao importar negociações da semana.');
+
+        //  Utilizando Promise para realizar as chamadas na sequência esperada
+        Promise.all([
+            negociacaoService.obterNegociacoesDaSemana(),
+            negociacaoService.obterNegociacoesDaSemanaPassada(),
+            negociacaoService.obterNegociacoesDaSemanaRetrasada()
+        ]).then(negociacoes => {
+            negociacoes
+                .reduce((todasNegociacoes, negociacoes) => todasNegociacoes.concat(negociacoes), [])
+                .forEach(negociacao => this._listaNegociacoes.adiciona(negociacao)
+            );
+        }).catch(erro => this._mensagem.texto = 'Erro ao importar negociações.');
     }
 
     _limpaFormulario() {
@@ -53,6 +60,15 @@ class NegociacaoController {
     limpaLista() {
         this._listaNegociacoes.esvazia();
         this._mensagem.texto = "Lista de negociações apagada com sucesso!";
+    }
+
+    ordena(coluna) {
+        if(this._ordemAtual == coluna) {
+            this._listaNegociacoes.inverteOrdem();
+        } else {
+            this._listaNegociacoes.ordena((a, b) => a[coluna] - b[coluna]);
+        }
+        this._ordemAtual = coluna;
     }
 
 }
